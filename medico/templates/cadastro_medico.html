@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'medicos/css/cadastro_medico.css' %}">
+{% endblock 'head' %}
+
+{% block 'body' %}
+{% include "partials/navbar.html" %}
+
+<div class="container">
+    <br>
+    <br>
+    <div class="row">
+        <div class="col-md-8">
+            
+            <p class="p-bold">Olá, <span class="color-dark">{{ request.user.username }}</span></p>
+            <p class="p-bold">Vamos realizar seu cadastro médico legal.</p>
+            {% if messages %}
+                <br>
+                {% for message in messages %}
+                    <section class="alert {{message.tags}}">
+                        {{message}}
+                    </section>
+                {% endfor %}
+            {% endif %}
+            <br>
+            <form id="cadastro-form" action="{% url "cadastro_medico" %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
+                <div class="row">
+                    <div class="col-md">
+                        <label for="crm">CRM:</label>
+                        <input type="text" class="form-control shadow-main-color" name="crm" id="crm" placeholder="CRM...">
+                    </div>
+                    <div class="col-md">
+                        <label for="cim">Cédula de identidade médica:</label>
+                        <input type="file" name="cim" id="cim" class="form-control shadow-main-color">
+
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-md">
+                        <label for="nome">Nome completo:</label>
+                        <input type="text" class="form-control shadow-main-color" name="nome" id="nome" placeholder="Digite seu nome ...">
+                    </div>
+                    <div class="col-md">
+                        <label for="cep">CEP</label>
+                        <input type="text" name="cep" id="cep" class="form-control shadow-main-color" onchange="buscaEndereco(this.value)">
+                        <small id="cepHelpBlock" class="form-text text-muted">Preencha o CEP para buscar o endereço automaticamente.</small>
+                    </div>
+                </div>
+                <br>
+                <label for="rua">Rua</label>
+                <input type="text" name="rua" id="rua" class="form-control shadow-main-color" placeholder="Endereço ..." readonly>
+                <br>
+                <div class="row">
+                    <div class="col-md">
+                        <label for="bairro">Bairro:</label>
+                        <input type="text" class="form-control shadow-main-color" name="bairro" id="bairro" placeholder="Bairro ..." readonly>
+                    </div>
+                    <div class="col-md">
+                        <label for="numero">Número:</label>
+                        <input type="number" name="numero" id="numero" class="form-control shadow-main-color">
+
+                    </div>
+                </div>
+                <br>
+                <label for="rg">RG:</label>
+                <input type="file" name="rg" id="rg" class="form-control shadow-main-color">
+                <br>
+                <label for="foto">Foto de perfil:</label>
+                <input type="file" name="foto" id="foto" class="form-control shadow-main-color">
+                <br>
+                <label for="especialidade">Especialidade médica</label>
+                <select name="especialidade" class="form-select" id="especialidade">
+                    {% for especialidade in especialidades %}
+                        <option value="{{especialidade.id}}">{{especialidade}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="descricao">Descrição:</label>
+                <textarea name="descricao" class="form-control shadow-main-color" id="descricao"></textarea>
+                <br>
+                <label for="valor_consulta">Valor consulta:</label>
+                <input type="number" name="valor_consulta" class="form-control shadow-main-color" id="valor_consulta">
+                <br>
+                <input type="submit" value="Cadastre-se" class="btn btn-success btn-dark-color">
+            </form>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+
+</div>
+
+<script>
+    function buscaEndereco(cep) {
+        // Limpa os campos de endereço
+        document.getElementById("rua").value = "";
+        document.getElementById("bairro").value = "";
+
+        // Verifica se o CEP possui apenas números
+        if (/^\d+$/.test(cep)) {
+            // Faz a requisição à API ViaCEP
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById("rua").value = data.logradouro;
+                        document.getElementById("bairro").value = data.bairro;
+                    }
+                })
+                .catch(error => console.error('Erro ao buscar endereço:', error));
+        } else {
+            alert("O CEP deve conter apenas números.");
+        }
+    }
+</script>
+
+{% endblock 'body' %}
