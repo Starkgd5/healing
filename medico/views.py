@@ -7,7 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.messages import constants
 from django.shortcuts import redirect, render
 
-from medico.models import DadosMedico, DatasAbertas, Especialidades, is_medico
+from medico.models import (DadosMedico, DatasAbertas, Documento,
+                           Especialidades, is_medico)
 from paciente.models import Consulta
 
 
@@ -77,7 +78,9 @@ def cadastro_medico(request):
         descricao = request.POST.get('descricao')
         valor_consulta = request.POST.get('valor_consulta')
 
-        # TODO: Validar todos os campos
+        if not all([crm, nome, cep, rua, bairro, cim, rg, especialidade, valor_consulta, foto]):
+            messages.add_message(request, constants.WARNING,
+                                 'Preencha todos os campos.')
 
         dados_medico = DadosMedico(
             crm=crm,
@@ -152,10 +155,25 @@ def consultas_medico(request):
 
     hoje = datetime.now().date()
 
-    consultas_hoje = Consulta.objects.filter(data_aberta__user=request.user).filter(
-        data_aberta__data__gte=hoje).filter(data_aberta__data__lt=hoje + timedelta(days=1))
-    print(consultas_hoje)
-    consultas_restantes = Consulta.objects.exclude(
+    consultas = Consulta.objects.filter(
+        data_aberta__user=request.user
+    )
+
+    by_especialidades = request.GET.get('especialidades')
+    by_data = request.GET.get('data')
+
+    if by_data:
+        consultas = consultas.filter(
+            data_aberta__data__icontains=by_data)
+
+    if by_especialidades:
+        consultas = consultas.filter(
+            data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
+
+    consultas_hoje = consultas.objects.filter(
+        data_aberta__data__gte=hoje).filter(
+        data_aberta__data__lt=hoje + timedelta(days=1))
+    consultas_restantes = consultas.objects.exclude(
         id__in=consultas_hoje.values('id'))
 
     context = {
@@ -165,3 +183,95 @@ def consultas_medico(request):
     }
 
     return render(request, 'consultas_medico.html', context)
+
+
+def consulta_area_medico(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING,
+                             'Somente médicos podem acessar essa página.')
+        return redirect('/usuarios/sair')
+
+    if request.method == "GET":
+        consulta = Consulta.objects.get(id=id_consulta)
+        documentos = Documento.objects.filter(consulta=consulta)
+        context = {
+            'consulta': consulta,
+            'is_medico': is_medico(request.user),
+            'documentos': documentos,
+        }
+        return render(request, 'consulta_area_medico.html', context)
+    elif request.method == "POST":
+        # Inicializa a consulta + link da chamada
+        consulta = Consulta.objects.get(id=id_consulta)
+        link = request.POST.get('link')
+
+        if consulta.status == 'C':
+            messages.add_message(
+                request, constants.WARNING, 'Essa consulta já foi cancelada, você não pode inicia-la')
+            return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+        elif consulta.status == "F":
+            messages.add_message(
+                request, constants.WARNING, 'Essa consulta já foi finalizada, você não pode inicia-la')
+            return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+        consulta.link = link
+        consulta.status = 'I'
+        consulta.save()
+
+        messages.add_message(request, constants.SUCCESS,
+                             'Consulta inicializada com sucesso.')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+
+def finalizar_consulta(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING,
+                             'Somente médicos podem acessar essa página.')
+        return redirect('/usuarios/sair')
+
+    consulta = Consulta.objects.get(id=id_consulta)
+    if request.user != consulta.data_aberta.user:
+        messages.add_message(request, constants.ERROR,
+                             'Essa consula não é sua.')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+    consulta.status = 'F'
+    consulta.save()
+    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+
+def add_documento(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING,
+                             'Somente médicos podem acessar essa página.')
+        return redirect('/usuarios/sair')
+
+    consulta = Consulta.objects.get(id=id_consulta)
+
+    if consulta.data_aberta.user != request.user:
+        messages.add_message(request, constants.ERROR,
+                             'Essa consulta não é sua!')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+    titulo = request.POST.get('titulo')
+    documento = request.FILES.get('documento')
+
+    if not documento:
+        messages.add_message(request, constants.WARNING,
+                             'Adicione o documento.')
+        return redirect('/medicos/abrir_horario')
+
+    documento = Documento(
+        consulta=consulta,
+        titulo=titulo,
+        documento=documento
+
+    )
+
+    documento.save()
+
+    messages.add_message(request, constants.SUCCESS,
+                         'Documento enviado com sucesso!')
+    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+
+# TODO: Fazer a dashboad de desempenho do medico

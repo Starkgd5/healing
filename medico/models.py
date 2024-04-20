@@ -52,3 +52,13 @@ class DatasAbertas(models.Model):
 
     def __str__(self) -> str:
         return str(self.data)
+
+
+class Documento(models.Model):
+    consulta = models.ForeignKey(
+        'paciente.Consulta',  on_delete=models.DO_NOTHING)
+    titulo = models.CharField(max_length=30)
+    documento = models.FileField(upload_to='documentos')
+
+    def __str__(self) -> str:
+        return self.titulo

@@ -17,25 +17,32 @@
 
     <br><br>
     <div class="container">
-        {% if consulta.status == 'C' %}
-            <div class="alert alert-danger" role="alert">
-                Consulta cancelada
-            </div>
-        {% elif consulta.status == 'F' %}
-            <div class="alert alert-success" role="alert">
-                Consulta Finalizada
-            </div>
-        {% elif consulta.status == 'I' %}
-            <div class="alert alert-primary" role="alert">
-                Consulta inicializada, acesse o link imediatamente!
-            </div>
-        {% endif %}
         <div class="row">
             <div class="col-md-8">
+                {% if consulta.status == 'C' %}
+                    <div class="alert alert-danger" role="alert">
+                        Consulta cancelada
+                    </div>
+                {% elif consulta.status == 'F' %}
+                    <div class="alert alert-success" role="alert">
+                        Consulta Finalizada
+                    </div>
+                {% elif consulta.status == 'I' %}
+                    <div class="alert alert-primary" role="alert">
+                        Consulta inicializada, acesse o link imediatamente!
+                    </div>
+                {% endif %}
+                {% if messages %}
+                    <br>
+                    {% for message in messages %}
+                        <section class="alert {{message.tags}}">
+                            {{message}}
+                        </section>
+                    {% endfor %}
+                {% endif %}
                 <div class="row">
-                    <div class="col-md-3"><img src="{{dado_medico.foto.url}}" class="foto-perfil-card-lg" alt=""></div>
                     <div class="col-md">
-                        <p style="font-size: 20px" class="p-bold">Dr(a). {{dado_medico.nome}} <i class="bi bi-patch-check-fill icon-main"></i></p>
+                        <p style="font-size: 20px" class="p-bold">Paciente {{consulta.paciente.username}} <i class="bi bi-patch-check-fill icon-main"></i></p>
                         <p>{{dado_medico.descricao}}</p>
                         <p class="p-bold">{{consulta.data_aberta.data}}</p>
                     </div>
@@ -57,24 +64,36 @@
                 <hr>
                 <h3 class="p-bold">Detalhes da consulta</h3>
                 <p style="font-size:20px"><i class="bi bi-calendar3 color-dark"></i>&nbsp {{consulta.data_aberta.data}}</p>
-                <p style="font-size:20px"><i class="bi bi-tag-fill color-dark"></i></i>&nbsp R$ {{dado_medico.valor_consulta}}</p>
                 <a style="cursor: auto;" class="btn btn-dark-color-outline btn-lg">Adicione em seu calendário!</a>
                 <hr>
                 <h3 class="p-bold">Como acessar ?</h3>
-                <p>No horário da consulta acesse o link disponível abaixo</p>
-
+                <p>Adicione o link do google meet para iniciar a consulta</p>
+                <form action="{% url 'consulta_area_medico' consulta.id %}" method="POST">{% csrf_token %}
+                    <input type="text" name="link" class="form-control shadow-main-color" id="" placeholder="Link ..." value="{% if consulta.link %}{{consulta.link}}{% endif %}">
+                    <br>
+                    <input type="submit" class="btn btn-success btn-dark-color btn-lg">
+                </form>
                 
-                {% if consulta.status == 'I' and consulta.link %}
-                    <a href="{{consulta.link}}"  class="btn btn-success btn-dark-color btn-lg" >Acessar consulta</a>
-                {% else %}
-
-                    <a href="#"  class="btn btn-success btn-dark-color btn-lg disabled" >Acessar consulta</a>
-
-                {% endif %}
-
                 
+                    
                 <hr>
-                <h3 class="p-bold">Meus documentos</h3>
+                
+                <br>
+                <br>
+                <br>
+                <br>
+            </div>
+            <div class="col-md">
+                <h3 class="p-bold">Documentos do paciente</h3>
+                <form action="{% url 'add_documento' consulta.id %}" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="text" name="titulo" class="form-control" placeholder="Titulo ...">
+                    <br>
+                    <input type="file" name="documento" class="form-control">
+                    <br>
+                    <input type="submit" class="btn btn-dark-color-outline btn-lg" value="+">
+                </form>
+                <hr>
                 <br>
                 {% for documento in documentos %}
                 <a href="{{documento.documento.url}}" class="link documentos">
@@ -85,12 +104,9 @@
                 <br>
                 <br>
                 {% endfor %}
-                <br>
-                <br>
-                <br>
-                <br>
+                <hr>
+                <a href="{% url 'finalizar_consulta' consulta.id %}" class="btn btn-primary">Finalizar consulta</a>
             </div>
-            <div class="col-md"></div>
         </div>
         
     </div>

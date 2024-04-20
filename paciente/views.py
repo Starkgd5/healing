@@ -5,7 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.messages import constants
 from django.shortcuts import redirect, render
 
-from medico.models import DadosMedico, DatasAbertas, Especialidades, is_medico
+from medico.models import (DadosMedico, DatasAbertas, Documento,
+                           Especialidades, is_medico)
 from paciente.models import Consulta
 
 
@@ -60,6 +61,8 @@ def agendar_horario(request, id_data_aberta):
         horario_agendado.save()
 
         # TODO: Sugestão Tornar atomico
+        with transaction.atomic():
+            horario_agendado.save()
 
         data_aberta.agendado = True
         data_aberta.save()
@@ -73,29 +76,26 @@ def agendar_horario(request, id_data_aberta):
 @login_required
 def minhas_consultas(request):
     if request.method == "GET":
-        # TODO: desenvolver filtros
-        historico_consultas = Consulta.objects.filter(
+        consultas = Consulta.objects.filter(
             paciente=request.user
         )
-        minhas_consultas = Consulta.objects.filter(
-            paciente=request.user).filter(
-                data_aberta__data__gte=datetime.now())
-
         by_especialidades = request.GET.get('especialidades')
         by_data = request.GET.get('data')
 
         if by_data:
-            minhas_consultas = minhas_consultas.filter(
+            consultas = consultas.filter(
                 data_aberta__data__icontains=by_data)
 
         if by_especialidades:
-            minhas_consultas = minhas_consultas.filter(
+            consultas = consultas.filter(
                 data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
+
+        minhas_consultas = consultas.objects.filter(
+            data_aberta__data__gte=datetime.now())
 
         context = {
             'minhas_consultas': minhas_consultas,
             'is_medico': is_medico(request.user),
-            'historico_consultas': historico_consultas
         }
         return render(request, 'minhas_consultas.html', context)
 
@@ -103,5 +103,15 @@ def minhas_consultas(request):
 def consulta(request, id_consulta):
     if request.method == 'GET':
         consulta = Consulta.objects.get(id=id_consulta)
+        documentos = Documento.objects.filter(consulta=consulta)
         dado_medico = DadosMedico.objects.get(user=consulta.data_aberta.user)
-        return render(request, 'consulta.html', {'consulta': consulta, 'dado_medico': dado_medico, 'is_medico': is_medico(request.user)})
+        context = {
+            'consulta': consulta,
+            'dado_medico': dado_medico,
+            'is_medico': is_medico(request.user),
+            'documentos': documentos
+        }
+        return render(request, 'consulta.html', context)
+
+# TODO: Fazer demais validações de segurança
+# TODO: Fazer botão de cancelar consulta
