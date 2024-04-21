@@ -1,3 +1,5 @@
+import calendar
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import requests
@@ -170,10 +172,10 @@ def consultas_medico(request):
         consultas = consultas.filter(
             data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
 
-    consultas_hoje = consultas.objects.filter(
+    consultas_hoje = consultas.filter(
         data_aberta__data__gte=hoje).filter(
         data_aberta__data__lt=hoje + timedelta(days=1))
-    consultas_restantes = consultas.objects.exclude(
+    consultas_restantes = consultas.exclude(
         id__in=consultas_hoje.values('id'))
 
     context = {
@@ -205,6 +207,11 @@ def consulta_area_medico(request, id_consulta):
         consulta = Consulta.objects.get(id=id_consulta)
         link = request.POST.get('link')
 
+        if request.user != consulta.data_aberta.user:
+            messages.add_message(request, constants.ERROR,
+                                 'Essa consula não é sua.')
+            return redirect('/medicos/consultas_medico')
+
         if consulta.status == 'C':
             messages.add_message(
                 request, constants.WARNING, 'Essa consulta já foi cancelada, você não pode inicia-la')
@@ -233,7 +240,7 @@ def finalizar_consulta(request, id_consulta):
     if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR,
                              'Essa consula não é sua.')
-        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+        return redirect('/medicos/consultas_medico')
     consulta.status = 'F'
     consulta.save()
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
@@ -247,10 +254,10 @@ def add_documento(request, id_consulta):
 
     consulta = Consulta.objects.get(id=id_consulta)
 
-    if consulta.data_aberta.user != request.user:
+    if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR,
-                             'Essa consulta não é sua!')
-        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+                             'Essa consula não é sua.')
+        return redirect('/medicos/consultas_medico')
 
     titulo = request.POST.get('titulo')
     documento = request.FILES.get('documento')
@@ -275,3 +282,30 @@ def add_documento(request, id_consulta):
 
 
 # TODO: Fazer a dashboad de desempenho do medico
+def dashboard_medico(request):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING,
+                             'Somente médicos podem acessar essa página.')
+        return redirect('/usuarios/sair')
+    consultas = Consulta.objects.filter(
+        data_aberta__user=request.user,
+        status='F'
+    )
+    # Calculando o número de consultas por mês
+    consultas_por_mes = defaultdict(int)
+    for consulta in consultas:
+        mes = consulta.data_aberta.data.month
+        consultas_por_mes[mes] += 1
+
+    # Preparando os dados para o gráfico
+    meses = [calendar.month_name[i] for i in range(1, 13)]
+    consultas_por_mes_data = {
+        'labels': meses,
+        'data': [consultas_por_mes[i] for i in range(1, 13)]
+    }
+
+    context = {
+        'is_medico': is_medico(request.user),
+        'consultas_por_mes_data': consultas_por_mes_data,
+    }
+    return render(request, 'dashboard_medico.html', context)

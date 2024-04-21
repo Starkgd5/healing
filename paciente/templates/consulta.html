@@ -32,6 +32,14 @@
         {% endif %}
         <div class="row">
             <div class="col-md-8">
+                {% if messages %}
+                    <br>
+                    {% for message in messages %}
+                        <section class="alert {{message.tags}}">
+                            {{message}}
+                        </section>
+                    {% endfor %}
+                {% endif %}
                 <div class="row">
                     <div class="col-md-3"><img src="{{dado_medico.foto.url}}" class="foto-perfil-card-lg" alt=""></div>
                     <div class="col-md">

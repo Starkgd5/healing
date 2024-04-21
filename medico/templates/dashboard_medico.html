@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block 'body' %}
+    {% include "partials/navbar.html" %}
+    <div class="container">
+        <br>
+        {% if messages %}
+            <br>
+            {% for message in messages %}
+                <section class="alert {{message.tags}}">
+                    {{message}}
+                </section>
+            {% endfor %}
+        {% endif %}
+        <h2><span class="color-dark">Dashboard de desempenho</span></h2>
+
+        <!-- Análise das consultas médicas -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Consultas por mês</h5>
+                        <canvas id="consultasPorMes"></canvas>
+                    </div>
+                </div>
+            </div>
+        <!-- JavaScript para inicializar o gráfico -->
+        <script>
+            var consultasPorMesData = {
+                labels: {{ consultas_por_mes_data.labels|safe }},
+                datasets: [{
+                    label: 'Consultas',
+                    data: {{ consultas_por_mes_data.data|safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            };
+        
+            var consultasPorMesOptions = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            };
+        
+            var consultasPorMesChart = new Chart(document.getElementById('consultasPorMes'), {
+                type: 'bar',
+                data: consultasPorMesData,
+                options: consultasPorMesOptions
+            });
+        </script>
+        
+    </div>
+{% endblock %}

@@ -17,21 +17,21 @@
 
     <br><br>
     <div class="container">
+        {% if consulta.status == 'C' %}
+            <div class="alert alert-danger" role="alert">
+                Consulta cancelada
+            </div>
+        {% elif consulta.status == 'F' %}
+            <div class="alert alert-success" role="alert">
+                Consulta Finalizada
+            </div>
+        {% elif consulta.status == 'I' %}
+            <div class="alert alert-primary" role="alert">
+                Consulta inicializada, acesse o link imediatamente!
+            </div>
+        {% endif %}
         <div class="row">
             <div class="col-md-8">
-                {% if consulta.status == 'C' %}
-                    <div class="alert alert-danger" role="alert">
-                        Consulta cancelada
-                    </div>
-                {% elif consulta.status == 'F' %}
-                    <div class="alert alert-success" role="alert">
-                        Consulta Finalizada
-                    </div>
-                {% elif consulta.status == 'I' %}
-                    <div class="alert alert-primary" role="alert">
-                        Consulta inicializada, acesse o link imediatamente!
-                    </div>
-                {% endif %}
                 {% if messages %}
                     <br>
                     {% for message in messages %}

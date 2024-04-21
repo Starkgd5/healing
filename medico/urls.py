@@ -2,7 +2,7 @@ from django.urls import path
 
 from medico.views import (abrir_horario, add_documento, cadastro_medico,
                           consulta_area_medico, consultas_medico,
-                          finalizar_consulta)
+                          dashboard_medico, finalizar_consulta)
 
 urlpatterns = [
     path('cadastro_medico/', cadastro_medico, name="cadastro_medico"),
@@ -14,4 +14,5 @@ urlpatterns = [
          finalizar_consulta, name="finalizar_consulta"),
     path('add_documento/<int:id_consulta>/',
          add_documento, name="add_documento"),
+    path('dashboard_medico/', dashboard_medico, name='dashboard_medico'),
 ]

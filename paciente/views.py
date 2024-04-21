@@ -61,8 +61,6 @@ def agendar_horario(request, id_data_aberta):
         horario_agendado.save()
 
         # TODO: Sugestão Tornar atomico
-        with transaction.atomic():
-            horario_agendado.save()
 
         data_aberta.agendado = True
         data_aberta.save()
@@ -90,7 +88,7 @@ def minhas_consultas(request):
             consultas = consultas.filter(
                 data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
 
-        minhas_consultas = consultas.objects.filter(
+        minhas_consultas = consultas.filter(
             data_aberta__data__gte=datetime.now())
 
         context = {
