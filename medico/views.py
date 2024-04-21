@@ -209,7 +209,7 @@ def consulta_area_medico(request, id_consulta):
 
         if request.user != consulta.data_aberta.user:
             messages.add_message(request, constants.ERROR,
-                                 'Essa consula não é sua.')
+                                 'Essa consulta não é sua.')
             return redirect('/medicos/consultas_medico')
 
         if consulta.status == 'C':
@@ -239,7 +239,7 @@ def finalizar_consulta(request, id_consulta):
     consulta = Consulta.objects.get(id=id_consulta)
     if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR,
-                             'Essa consula não é sua.')
+                             'Essa consulta não é sua.')
         return redirect('/medicos/consultas_medico')
     consulta.status = 'F'
     consulta.save()
@@ -256,7 +256,7 @@ def add_documento(request, id_consulta):
 
     if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR,
-                             'Essa consula não é sua.')
+                             'Essa consulta não é sua.')
         return redirect('/medicos/consultas_medico')
 
     titulo = request.POST.get('titulo')
