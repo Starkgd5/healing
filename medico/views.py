@@ -187,6 +187,7 @@ def consultas_medico(request):
     return render(request, 'consultas_medico.html', context)
 
 
+@login_required
 def consulta_area_medico(request, id_consulta):
     if not is_medico(request.user):
         messages.add_message(request, constants.WARNING,
@@ -230,6 +231,7 @@ def consulta_area_medico(request, id_consulta):
         return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
+@login_required
 def finalizar_consulta(request, id_consulta):
     if not is_medico(request.user):
         messages.add_message(request, constants.WARNING,
@@ -246,6 +248,7 @@ def finalizar_consulta(request, id_consulta):
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
+@login_required
 def add_documento(request, id_consulta):
     if not is_medico(request.user):
         messages.add_message(request, constants.WARNING,
@@ -281,23 +284,41 @@ def add_documento(request, id_consulta):
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
-# TODO: Fazer a dashboad de desempenho do medico
+@login_required
+def cancelar_consulta(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING,
+                             'Somente médicos podem acessar essa página.')
+        return redirect('/usuarios/sair')
+
+    consulta = Consulta.objects.get(id=id_consulta)
+    if request.user != consulta.data_aberta.user:
+        messages.add_message(request, constants.ERROR,
+                             'Essa consulta não é sua.')
+        return redirect('/medicos/consultas_medico')
+    consulta.status = 'C'
+    consulta.save()
+    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+
+@login_required
 def dashboard_medico(request):
     if not is_medico(request.user):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
+
+    # Consultas finalizadas do médico logado
     consultas = Consulta.objects.filter(
         data_aberta__user=request.user,
-        status='F'
+        status='F',
     )
-    # Calculando o número de consultas por mês
+
     consultas_por_mes = defaultdict(int)
     for consulta in consultas:
         mes = consulta.data_aberta.data.month
         consultas_por_mes[mes] += 1
 
-    # Preparando os dados para o gráfico
     meses = [calendar.month_name[i] for i in range(1, 13)]
     consultas_por_mes_data = {
         'labels': meses,

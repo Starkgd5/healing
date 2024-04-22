@@ -70,14 +70,15 @@
                 <hr>
                 <h3 class="p-bold">Como acessar ?</h3>
                 <p>No horário da consulta acesse o link disponível abaixo</p>
-
-                
                 {% if consulta.status == 'I' and consulta.link %}
                     <a href="{{consulta.link}}"  class="btn btn-success btn-dark-color btn-lg" >Acessar consulta</a>
                 {% else %}
-
                     <a href="#"  class="btn btn-success btn-dark-color btn-lg disabled" >Acessar consulta</a>
-
+                {% endif %}
+                {% if consulta.status == 'A' %}
+                    <hr>
+                    <h3 class="p-bold">Cancelar consulta ?</h3>
+                    <a href="{% url 'cancelar_consulta' consulta.id %}" class="btn btn-danger">Cancelar consulta</a>
                 {% endif %}
 
                 

@@ -98,6 +98,7 @@ def minhas_consultas(request):
         return render(request, 'minhas_consultas.html', context)
 
 
+@login_required
 def consulta_paciente(request, id_consulta):
     if request.method == 'GET':
         consulta = Consulta.objects.get(id=id_consulta)
@@ -106,6 +107,7 @@ def consulta_paciente(request, id_consulta):
         if request.user != consulta.paciente:
             messages.add_message(request, constants.ERROR,
                                  'Essa consulta não é sua.')
+            return redirect('/pacientes/home')
         context = {
             'consulta': consulta,
             'dado_medico': dado_medico,
@@ -115,19 +117,13 @@ def consulta_paciente(request, id_consulta):
         return render(request, 'consulta.html', context)
 
 
+@login_required
 def cancelar_consulta(request, id_consulta):
-    if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING,
-                             'Somente médicos podem acessar essa página.')
-        return redirect('/usuarios/sair')
-
     consulta = Consulta.objects.get(id=id_consulta)
     if request.user != consulta.paciente:
         messages.add_message(request, constants.ERROR,
                              'Essa consulta não é sua.')
-        return redirect('/medicos/consultas_medico')
+        return redirect('/pacientes/home')
     consulta.status = 'C'
     consulta.save()
-    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
-
-# TODO: Fazer botão de cancelar consulta
+    return redirect(f'/pacientes/consulta/{id_consulta}')

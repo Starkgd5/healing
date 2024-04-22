@@ -105,7 +105,16 @@
                 <br>
                 {% endfor %}
                 <hr>
-                <a href="{% url 'finalizar_consulta' consulta.id %}" class="btn btn-primary">Finalizar consulta</a>
+                <div class="row">
+                    <div class="col-md">
+                        <a href="{% url 'finalizar_consulta' consulta.id %}" class="btn btn-primary">Finalizar consulta</a>
+                    </div>
+                    {% if consulta.status == 'A' %}
+                        <div class="col-md">
+                            <a href="{% url 'cancelar_consulta_medico' consulta.id %}" class="btn btn-danger">Cancelar consulta</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         

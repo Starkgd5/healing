@@ -1,43 +1,59 @@
 {% load static %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-color-dark">
     <div class="container-fluid">
-      {% if is_medico %}
-        <a class="navbar-brand" href="{% url "consultas_medico" %}"><img src="{% static 'geral/img/logo.png' %}" width="20%" alt="">&nbspHEALING</a>
-      {% else %}
-        <a class="navbar-brand" href="{% url "home" %}"><img src="{% static 'geral/img/logo.png' %}" width="20%" alt="">&nbspHEALING</a>
-      {% endif %}
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Área do paciente
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                  <li><a class="dropdown-item" href="{% url 'home' %}">Home</a></li>
-                  <li><a class="dropdown-item" href="{% url 'minhas_consultas' %}">Minhas consultas</a></li>
-                </ul>
-            </li>
-
-            {% if is_medico %}
+        {% if is_medico %}
+            <a class="navbar-brand" href="{% url "consultas_medico" %}"><img src="{% static 'geral/img/logo.png' %}" width="20%" alt="">&nbspHEALING</a>
+        {% else %}
+            <a class="navbar-brand" href="{% url "home" %}"><img src="{% static 'geral/img/logo.png' %}" width="20%" alt="">&nbspHEALING</a>
+        {% endif %}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Área do médico
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Área do paciente
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                        <li><a class="dropdown-item" href="{% url 'abrir_horario' %}">Abrir horários</a></li>
-                        <li><a class="dropdown-item" href="{% url 'consultas_medico' %}">Suas consultas</a></li>
-                        <li><a class="dropdown-item" href="{% url 'dashboard_medico' %}">Dashboard</a></li>
+                        <li><a class="dropdown-item" href="{% url 'home' %}">Home</a></li>
+                        <li><a class="dropdown-item" href="{% url 'minhas_consultas' %}">Minhas consultas</a></li>
                     </ul>
                 </li>
-            {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'cadastro_medico' %}">Sou médico</a>
-                </li>
-            {% endif %}
-        </ul>
-      </div>
+
+                {% if is_medico %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            Área do médico
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <li><a class="dropdown-item" href="{% url 'abrir_horario' %}">Abrir horários</a></li>
+                            <li><a class="dropdown-item" href="{% url 'consultas_medico' %}">Suas consultas</a></li>
+                            <li><a class="dropdown-item" href="{% url 'dashboard_medico' %}">Dashboard</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'cadastro_medico' %}">Sou médico</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Ícone de usuário e menu -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                <li><a class="dropdown-item" href="
+                  {% comment %} {% url 'perfil' %} {% endcomment %}
+                  ">Perfil</a></li>
+                <li><a class="dropdown-item" href="{% url 'sair' %}">Logout</a></li>
+            </ul>
+        </div>
     </div>
-  </nav>
+</nav>

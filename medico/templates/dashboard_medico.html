@@ -1,4 +1,17 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block 'head' %}
+
+    <link rel="stylesheet" href="{% static 'medicos/css/abrir_horario.css' %}">
+    <link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'medicos/css/cadastro_medico.css' %}">
+    <link rel="stylesheet" href="{% static 'pacientes/css/home.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+{% endblock 'head' %}
+
 
 {% block 'body' %}
     {% include "partials/navbar.html" %}
@@ -20,16 +33,16 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Consultas por mês</h5>
-                        <canvas id="consultasPorMes"></canvas>
+                        <canvas id="desempenhoMedico"></canvas>
                     </div>
                 </div>
             </div>
         <!-- JavaScript para inicializar o gráfico -->
         <script>
-            var consultasPorMesData = {
+            var desempenhoMedicoData = {
                 labels: {{ consultas_por_mes_data.labels|safe }},
                 datasets: [{
-                    label: 'Consultas',
+                    label: 'Consultas Finalizadas',
                     data: {{ consultas_por_mes_data.data|safe }},
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
@@ -37,7 +50,7 @@
                 }]
             };
         
-            var consultasPorMesOptions = {
+            var desempenhoMedicoOptions = {
                 scales: {
                     yAxes: [{
                         ticks: {
@@ -47,10 +60,10 @@
                 }
             };
         
-            var consultasPorMesChart = new Chart(document.getElementById('consultasPorMes'), {
+            var desempenhoMedicoChart = new Chart(document.getElementById('desempenhoMedico'), {
                 type: 'bar',
-                data: consultasPorMesData,
-                options: consultasPorMesOptions
+                data: desempenhoMedicoData,
+                options: desempenhoMedicoOptions
             });
         </script>
         
