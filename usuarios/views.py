@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.messages import constants
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 
 from medico.models import DadosMedico, is_medico
 from paciente.models import DadosPaciente
@@ -61,10 +61,8 @@ def login_view(request):
             if profile is None:
                 return redirect('/usuarios/cadastro_profile')
 
-            profile = UserProfile.objects.get(user=request.user)
-            if is_medico(profile):
-                return redirect('/medicos/consultas_medico')
-            return redirect('/pacientes/home')
+            return redirect('/usuarios/selecionar_perfil')
+
         messages.add_message(request, messages.ERROR,
                              'Usuário ou senha incorretos')
         return redirect('/usuarios/login')
@@ -123,3 +121,21 @@ def escolher_tipo(request):
             return redirect('/medicos/cadastro_medico')
         elif paciente:
             return redirect('/pacientes/cadastro_paciente')
+
+
+def selecionar_perfil(request):
+    profiles = UserProfile.objects.filter(user=request.user)
+    if request.method == "GET":
+        context = {
+            'profiles': profiles
+        }
+        return render(request, 'selecionar_perfil.html', context)
+    elif request.method == "POST":
+        profile_id = request.POST.get('profile')
+        if profile_id:
+            profile = get_object_or_404(UserProfile, id=profile_id)
+            # enviar profile para a sessão do usuario
+            request.session['profile_id'] = profile.id
+            if is_medico(profile):
+                return redirect('/medicos/consultas_medico')
+            return redirect('/pacientes/home')

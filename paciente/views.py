@@ -13,7 +13,8 @@ from usuarios.models import UserProfile
 
 @login_required(login_url='/usuarios/login')
 def home(request):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     if request.method == "GET":
         medicos = DadosMedico.objects.all()
         especialidades = Especialidades.objects.all()
@@ -38,11 +39,14 @@ def home(request):
 
 @login_required(login_url='/usuarios/login')
 def escolher_horario(request, id_dados_medicos):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     if request.method == "GET":
         medico = DadosMedico.objects.get(id=id_dados_medicos)
-        datas_abertas = DatasAbertas.objects.filter(profile_id=medico.profile.id).filter(
-            data__gte=datetime.now()).filter(agendado=False).order_by('data')
+        datas_abertas = DatasAbertas.objects.filter(
+            profile=medico.profile).filter(
+                data__gte=datetime.now()).filter(
+                    agendado=False).order_by('data')
         context = {
             'medico': medico,
             'datas_abertas': datas_abertas,
@@ -54,17 +58,16 @@ def escolher_horario(request, id_dados_medicos):
 @login_required(login_url='/usuarios/login')
 def agendar_horario(request, id_data_aberta):
     if request.method == "GET":
-        profile = UserProfile.objects.get(user=request.user)
+        profile_id = request.session.get('profile_id')
+        profile = UserProfile.objects.get(id=profile_id)
         data_aberta = DatasAbertas.objects.get(id=id_data_aberta)
 
         horario_agendado = Consulta(
-            paciente_id=profile.id,
+            paciente=profile,
             data_aberta=data_aberta
         )
 
         horario_agendado.save()
-
-        # TODO: Sugestão Tornar atomico
 
         data_aberta.agendado = True
         data_aberta.save()
@@ -77,7 +80,8 @@ def agendar_horario(request, id_data_aberta):
 
 @login_required(login_url='/usuarios/login')
 def minhas_consultas(request):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     especialidade = request.GET.get('especialidade')
     data = request.GET.get('data')
     consultas = Consulta.objects.filter(paciente=profile).filter(
@@ -102,7 +106,8 @@ def minhas_consultas(request):
 
 @login_required(login_url='/usuarios/login')
 def consulta_paciente(request, id_consulta):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     consulta = get_object_or_404(Consulta, id=id_consulta)
 
     # Verifica se o usuário autenticado é o paciente associado à consulta
@@ -128,8 +133,10 @@ def consulta_paciente(request, id_consulta):
 
 @login_required(login_url='/usuarios/login')
 def cancelar_consulta(request, id_consulta):
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     consulta = Consulta.objects.get(id=id_consulta)
-    if request.user != consulta.paciente:
+    if profile != consulta.paciente:
         messages.add_message(request, constants.ERROR,
                              'Essa consulta não é sua.')
         return redirect('/pacientes/home')
@@ -140,7 +147,8 @@ def cancelar_consulta(request, id_consulta):
 
 @login_required(login_url='/usuarios/login')
 def cadastro_paciente(request):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
 
     if request.method == "GET":
         context = {

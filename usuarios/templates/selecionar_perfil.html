@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Selecionar Perfil{% endblock %}
+
+{% block 'head' %}
+<link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+{% endblock %}
+
+{% block 'body' %}
+{% include "partials/navbar.html" %}
+
+<div class="container">
+    <h1>Selecionar Perfil</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="profile" class="form-label">Selecione seu perfil:</label>
+            <select name="profile" id="profile" class="form-select">
+                {% for profile in profiles %}
+                    <option value="{{ profile.id }}">{{ profile }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Continuar</button>
+    </form>
+</div>
+
+{% endblock %}
