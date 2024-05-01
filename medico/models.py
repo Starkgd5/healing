@@ -3,9 +3,11 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
 
+from usuarios.models import UserProfile
 
-def is_medico(user):
-    return DadosMedico.objects.filter(user=user).exists()
+
+def is_medico(profile):
+    return DadosMedico.objects.filter(profile_id=profile.id).exists()
 
 
 class Especialidades(models.Model):
@@ -18,28 +20,20 @@ class Especialidades(models.Model):
 
 class DadosMedico(models.Model):
     crm = models.CharField(max_length=30)
-    nome = models.CharField(max_length=100)
-    cep = models.CharField(max_length=15)
-    rua = models.CharField(max_length=100)
-    bairro = models.CharField(max_length=100)
-    numero = models.IntegerField()
-    rg = models.ImageField(upload_to="rgs")
     cedula_identidade_medica = models.ImageField(upload_to='cim')
-    foto = models.ImageField(upload_to="fotos_perfil")
-    user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='medico_user')
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     descricao = models.TextField(null=True, blank=True)
     especialidade = models.ForeignKey(
         Especialidades, on_delete=models.DO_NOTHING, null=True, blank=True)
     valor_consulta = models.FloatField(default=100)
 
     def __str__(self):
-        return self.user.username
+        return self.profile.nome
 
     @property
     def proxima_data(self):
         proxima_data = DatasAbertas.objects.filter(
-            user=self.user).filter(
+            profile=self.profile).filter(
                 data__gt=datetime.now()).filter(
                     agendado=False).order_by('data').first()
         return proxima_data
@@ -47,7 +41,7 @@ class DadosMedico(models.Model):
 
 class DatasAbertas(models.Model):
     data = models.DateTimeField()
-    user = models.ForeignKey(User,  on_delete=models.DO_NOTHING)
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     agendado = models.BooleanField(default=False)
 
     def __str__(self) -> str:

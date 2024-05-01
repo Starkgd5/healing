@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'medicos/css/cadastro_medico.css' %}">
+{% endblock 'head' %}
+
+{% block 'body' %}
+{% include "partials/navbar.html" %}
+
+<div class="container">
+    <br>
+    <br>
+    <div class="row">
+        <div class="col-md-8">
+            
+            <p class="p-bold">Olá, <span class="color-dark">{{ request.user.username }}</span></p>
+            <p class="p-bold">Vamos realizar seu de paciente.</p>
+            {% if messages %}
+                <br>
+                {% for message in messages %}
+                    <section class="alert {{message.tags}}">
+                        {{message}}
+                    </section>
+                {% endfor %}
+            {% endif %}
+            <br>
+            <form id="cadastro-form" action="{% url "cadastro_paciente" %}" method="post">{% csrf_token %}
+                <div class="row">
+                    <div class="col-md">
+                        <label for="cpf">CPF:</label>
+                        <input type="text" class="form-control shadow-main-color" name="cpf" id="cpf" placeholder="CPF...">
+                    </div>
+                    <div class="col-md">
+                        <label for="cns">CNS:</label>
+                        <input type="text" class="form-control shadow-main-color" name="cns" id="cns" placeholder="CNS...">
+                    </div>
+                </div>
+                <br>
+                <label for="mother_name">Nome da mãe:</label>
+                <input type="text" class="form-control shadow-main-color" name="mother_name" id="mother_name" placeholder="Digite o nome da mãe ...">
+                <br>
+                <label for="birth_date">Data de nascimento:</label>
+                <input type="date" class="form-control shadow-main-color" name="birth_date" id="birth_date">
+                <br>
+                <input type="submit" value="Cadastre-se" class="btn btn-success btn-dark-color">
+            </form>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+</div>
+{% endblock 'body' %}

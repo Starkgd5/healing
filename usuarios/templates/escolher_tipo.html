@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'title' %}Escolher Tipo{% endblock 'title' %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'medicos/css/cadastro_medico.css' %}">
+{% endblock 'head' %}
+
+{% block 'body' %}
+{% include "partials/navbar.html" %}
+
+<div class="container">
+    <br>
+    <br>
+    <div class="row">
+        <div class="col-md-8">
+            <p class="p-bold">Olá, <span class="color-dark">{{ request.user.username }}</span></p>
+            <p class="p-bold">Vamos realizar seu cadastro de perfil.</p>
+            {% if messages %}
+                <br>
+                {% for message in messages %}
+                    <section class="alert {{message.tags}}">
+                        {{message}}
+                    </section>
+                {% endfor %}
+            {% endif %}
+            <br>
+            <form id="cadastro-form" action="{% url 'escolher_tipo' %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="medico" name="medico">
+                    <label class="form-check-label" for="medico">Sou médico</label>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="paciente" name="paciente">
+                    <label class="form-check-label" for="paciente">Sou paciente</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Continuar</button>
+            </form>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+</div>
+
+{% endblock 'body' %}

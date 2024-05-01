@@ -43,13 +43,13 @@
                {% for medico in medicos %}
                 <div class="card-medicos shadow-main-color">
                     <div class="row">
-                        <div class="col-md-3"><img src="{{ medico.foto.url }}" class="foto-perfil-card" alt="{{ medico.foto.alt }}"></div>
+                        <div class="col-md-3"><img src="{{ medico.profile.foto.url }}" class="foto-perfil-card" alt="{{ medico.profile.foto.alt }}"></div>
                         <div class="col-md">
-                            <p style="font-size: 20px" class="p-bold">Dr(a). {{ medico.nome }} <i class="bi bi-patch-check-fill icon-main"></i></p>
+                            <p style="font-size: 20px" class="p-bold">Dr(a). {{ medico.profile.nome }} <i class="bi bi-patch-check-fill icon-main"></i></p>
                             <p>{{ medico.descricao }}</p>
                         </div>
                     </div>  
-                    <p><i class="bi bi-map icon-main"></i>&nbsp&nbsp{{ medico.rua }}, {{ medico.numero }}.</p>
+                    <p><i class="bi bi-map icon-main"></i>&nbsp&nbsp{{ medico.profile.rua }}, {{ medico.profile.numero }}.</p>
                     <p><i class="bi bi-calendar2-week icon-main"></i>&nbsp&nbspProxima data: 
                         {% if medico.proxima_data %}
                             {{ medico.proxima_data }}

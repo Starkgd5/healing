@@ -3,15 +3,17 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.messages import constants
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from medico.models import (DadosMedico, DatasAbertas, Documento,
                            Especialidades, is_medico)
-from paciente.models import Consulta
+from paciente.models import Consulta, DadosPaciente
+from usuarios.models import UserProfile
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def home(request):
+    profile = UserProfile.objects.get(user=request.user)
     if request.method == "GET":
         medicos = DadosMedico.objects.all()
         especialidades = Especialidades.objects.all()
@@ -20,7 +22,7 @@ def home(request):
         especialidades_filtrar = request.GET.getlist('especialidades')
 
         if medico_filtrar:
-            medicos = medicos.filter(nome__icontains=medico_filtrar)
+            medicos = medicos.filter(profile__nome__icontains=medico_filtrar)
 
         if especialidades_filtrar:
             medicos = medicos.filter(
@@ -29,32 +31,34 @@ def home(request):
         context = {
             'medicos': medicos,
             'especialidades': especialidades,
-            'is_medico': is_medico(request.user)
+            'is_medico': is_medico(profile)
         }
         return render(request, 'home.html', context)
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def escolher_horario(request, id_dados_medicos):
+    profile = UserProfile.objects.get(user=request.user)
     if request.method == "GET":
         medico = DadosMedico.objects.get(id=id_dados_medicos)
-        datas_abertas = DatasAbertas.objects.filter(user=medico.user).filter(
-            data__gte=datetime.now()).filter(agendado=False)
+        datas_abertas = DatasAbertas.objects.filter(profile_id=medico.profile.id).filter(
+            data__gte=datetime.now()).filter(agendado=False).order_by('data')
         context = {
             'medico': medico,
             'datas_abertas': datas_abertas,
-            'is_medico': is_medico(request.user)
+            'is_medico': is_medico(profile)
         }
         return render(request, 'escolher_horario.html', context)
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def agendar_horario(request, id_data_aberta):
     if request.method == "GET":
+        profile = UserProfile.objects.get(user=request.user)
         data_aberta = DatasAbertas.objects.get(id=id_data_aberta)
 
         horario_agendado = Consulta(
-            paciente=request.user,
+            paciente_id=profile.id,
             data_aberta=data_aberta
         )
 
@@ -71,53 +75,58 @@ def agendar_horario(request, id_data_aberta):
         return redirect('/pacientes/minhas_consultas/')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def minhas_consultas(request):
-    if request.method == "GET":
-        consultas = Consulta.objects.filter(
-            paciente=request.user
-        )
-        by_especialidades = request.GET.get('especialidades')
-        by_data = request.GET.get('data')
+    profile = UserProfile.objects.get(user=request.user)
+    especialidade = request.GET.get('especialidade')
+    data = request.GET.get('data')
+    consultas = Consulta.objects.filter(paciente=profile).filter(
+        data_aberta__data__gte=datetime.now())
 
-        if by_data:
-            consultas = consultas.filter(
-                data_aberta__data__icontains=by_data)
+    if data:
+        consultas = consultas.filter(data_aberta__data__gte=data)
 
-        if by_especialidades:
-            consultas = consultas.filter(
-                data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
+    if especialidade:
+        consultas = consultas.filter(
+            data_aberta__profile__dadosmedico__especialidade__id=especialidade)
 
-        minhas_consultas = consultas.filter(
-            data_aberta__data__gte=datetime.now())
+    especialidades = Especialidades.objects.all()
 
-        context = {
-            'minhas_consultas': minhas_consultas,
-            'is_medico': is_medico(request.user),
-        }
-        return render(request, 'minhas_consultas.html', context)
+    context = {
+        'minhas_consultas': consultas,
+        'is_medico': is_medico(profile),
+        'especialidades': especialidades
+    }
+    return render(request, 'minhas_consultas.html', context)
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def consulta_paciente(request, id_consulta):
-    if request.method == 'GET':
-        consulta = Consulta.objects.get(id=id_consulta)
-        documentos = Documento.objects.filter(consulta=consulta)
-        dado_medico = DadosMedico.objects.get(user=consulta.data_aberta.user)
-        if request.user != consulta.paciente:
-            messages.add_message(request, constants.ERROR,
-                                 'Essa consulta não é sua.')
-            return redirect('/pacientes/home')
-        context = {
-            'consulta': consulta,
-            'dado_medico': dado_medico,
-            'is_medico': is_medico(request.user),
-            'documentos': documentos
-        }
-        return render(request, 'consulta.html', context)
+    profile = UserProfile.objects.get(user=request.user)
+    consulta = get_object_or_404(Consulta, id=id_consulta)
+
+    # Verifica se o usuário autenticado é o paciente associado à consulta
+    if profile != consulta.paciente:
+        messages.add_message(request, constants.ERROR,
+                             'Essa consulta não é sua.')
+        return redirect('/pacientes/home')
+
+    documentos = Documento.objects.filter(consulta=consulta)
+
+    # Acessa o perfil do médico associado à consulta
+    dado_medico = DadosMedico.objects.get(
+        profile=consulta.data_aberta.profile)
+
+    context = {
+        'consulta': consulta,
+        'dado_medico': dado_medico,
+        'is_medico': is_medico(profile),
+        'documentos': documentos
+    }
+    return render(request, 'consulta.html', context)
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def cancelar_consulta(request, id_consulta):
     consulta = Consulta.objects.get(id=id_consulta)
     if request.user != consulta.paciente:
@@ -127,3 +136,40 @@ def cancelar_consulta(request, id_consulta):
     consulta.status = 'C'
     consulta.save()
     return redirect(f'/pacientes/consulta/{id_consulta}')
+
+
+@login_required(login_url='/usuarios/login')
+def cadastro_paciente(request):
+    profile = UserProfile.objects.get(user=request.user)
+
+    if request.method == "GET":
+        context = {
+            'is_medico': is_medico(profile)
+        }
+        return render(
+            request,
+            'cadastro_paciente.html', context)
+    elif request.method == "POST":
+        cpf = request.POST.get('cpf')
+        cns = request.POST.get('cns')
+        birth_date = request.POST.get('birth_date')
+        mother_name = request.POST.get('mother_name')
+
+        if not all([cpf, cns, birth_date, mother_name]):
+            messages.add_message(request, constants.WARNING,
+                                 'Preencha todos os campos.')
+
+        dados_paciente = DadosPaciente(
+            cpf=cpf,
+            cns=cns,
+            profile=profile,
+            mother_name=mother_name,
+            birth_date=birth_date,
+        )
+        dados_paciente.save()
+
+        messages.add_message(
+            request,
+            constants.SUCCESS, 'Cadastro paciente realizado com sucesso.')
+
+        return redirect('/pacientes/home')

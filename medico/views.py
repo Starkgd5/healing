@@ -12,6 +12,7 @@ from django.shortcuts import redirect, render
 from medico.models import (DadosMedico, DatasAbertas, Documento,
                            Especialidades, is_medico)
 from paciente.models import Consulta
+from usuarios.models import UserProfile
 
 
 # Função para realizar a pesquisa de médicos
@@ -50,9 +51,10 @@ def search_doctor(name):
 search_doctor("João da Silva")
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def cadastro_medico(request):
-    if is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Você já está cadastrado como médico.')
         return redirect('/medicos/abrir_horario')
@@ -68,33 +70,19 @@ def cadastro_medico(request):
             'cadastro_medico.html', context)
     elif request.method == "POST":
         crm = request.POST.get('crm')
-        nome = request.POST.get('nome')
-        cep = request.POST.get('cep')
-        rua = request.POST.get('rua')
-        bairro = request.POST.get('bairro')
-        numero = request.POST.get('numero')
         cim = request.FILES.get('cim')
-        rg = request.FILES.get('rg')
-        foto = request.FILES.get('foto')
         especialidade = request.POST.get('especialidade')
         descricao = request.POST.get('descricao')
         valor_consulta = request.POST.get('valor_consulta')
 
-        if not all([crm, nome, cep, rua, bairro, cim, rg, especialidade, valor_consulta, foto]):
+        if not all([crm, cim, especialidade, valor_consulta]):
             messages.add_message(request, constants.WARNING,
                                  'Preencha todos os campos.')
 
         dados_medico = DadosMedico(
             crm=crm,
-            nome=nome,
-            cep=cep,
-            rua=rua,
-            bairro=bairro,
-            numero=numero,
-            rg=rg,
             cedula_identidade_medica=cim,
-            foto=foto,
-            user=request.user,
+            profile=profile,
             descricao=descricao,
             especialidade_id=especialidade,
             valor_consulta=valor_consulta
@@ -108,21 +96,22 @@ def cadastro_medico(request):
         return redirect('/medicos/abrir_horario')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def abrir_horario(request):
 
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
 
     if request.method == "GET":
-        dados_medicos = DadosMedico.objects.get(user=request.user)
-        datas_abertas = DatasAbertas.objects.filter(user=request.user)
+        dados_medicos = DadosMedico.objects.get(profile=profile)
+        datas_abertas = DatasAbertas.objects.filter(profile=profile)
         context = {
             'dados_medicos': dados_medicos,
             'datas_abertas': datas_abertas,
-            'is_medico': is_medico(request.user)
+            'is_medico': is_medico(profile)
         }
         return render(
             request, 'abrir_horario.html', context)
@@ -138,7 +127,7 @@ def abrir_horario(request):
 
         horario_abrir = DatasAbertas(
             data=data,
-            user=request.user
+            profile=profile
         )
 
         horario_abrir.save()
@@ -148,9 +137,10 @@ def abrir_horario(request):
         return redirect('/medicos/abrir_horario')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def consultas_medico(request):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
@@ -158,38 +148,41 @@ def consultas_medico(request):
     hoje = datetime.now().date()
 
     consultas = Consulta.objects.filter(
-        data_aberta__user=request.user
+        data_aberta__profile=profile
     )
 
-    by_especialidades = request.GET.get('especialidades')
-    by_data = request.GET.get('data')
+    especialidade = request.GET.get('especialidade')
+    data = request.GET.get('data')
 
-    if by_data:
+    if data:
         consultas = consultas.filter(
-            data_aberta__data__icontains=by_data)
+            data_aberta__data__gte=data)
 
-    if by_especialidades:
+    if especialidade:
         consultas = consultas.filter(
-            data_aberta__user__medico_user__especialidade__especialidade__icontains=by_especialidades)
+            data_aberta__user__userprofile__dadosmedico__especialidade__id=especialidade)
 
     consultas_hoje = consultas.filter(
         data_aberta__data__gte=hoje).filter(
         data_aberta__data__lt=hoje + timedelta(days=1))
     consultas_restantes = consultas.exclude(
         id__in=consultas_hoje.values('id'))
+    especialidades = Especialidades.objects.all()
 
     context = {
         'consultas_hoje': consultas_hoje,
         'consultas_restantes': consultas_restantes,
-        'is_medico': is_medico(request.user)
+        'is_medico': is_medico(profile),
+        'especialidades': especialidades
     }
 
     return render(request, 'consultas_medico.html', context)
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def consulta_area_medico(request, id_consulta):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
@@ -199,7 +192,7 @@ def consulta_area_medico(request, id_consulta):
         documentos = Documento.objects.filter(consulta=consulta)
         context = {
             'consulta': consulta,
-            'is_medico': is_medico(request.user),
+            'is_medico': is_medico(profile),
             'documentos': documentos,
         }
         return render(request, 'consulta_area_medico.html', context)
@@ -231,9 +224,10 @@ def consulta_area_medico(request, id_consulta):
         return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def finalizar_consulta(request, id_consulta):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
@@ -248,9 +242,10 @@ def finalizar_consulta(request, id_consulta):
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def add_documento(request, id_consulta):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
@@ -284,9 +279,10 @@ def add_documento(request, id_consulta):
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def cancelar_consulta(request, id_consulta):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
@@ -301,16 +297,17 @@ def cancelar_consulta(request, id_consulta):
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
 
-@login_required
+@login_required(login_url='/usuarios/login')
 def dashboard_medico(request):
-    if not is_medico(request.user):
+    profile = UserProfile.objects.get(user=request.user)
+    if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
 
     # Consultas finalizadas do médico logado
     consultas = Consulta.objects.filter(
-        data_aberta__user=request.user,
+        data_aberta__profile=profile,
         status='F',
     )
 
@@ -326,7 +323,7 @@ def dashboard_medico(request):
     }
 
     context = {
-        'is_medico': is_medico(request.user),
+        'is_medico': is_medico(profile),
         'consultas_por_mes_data': consultas_por_mes_data,
     }
     return render(request, 'dashboard_medico.html', context)

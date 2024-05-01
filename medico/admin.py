@@ -10,9 +10,9 @@ class EspecialidadesAdmin(admin.ModelAdmin):
 
 @admin.register(DadosMedico)
 class DadosMedicoAdmin(admin.ModelAdmin):
-    list_display = ['nome', 'especialidade', 'foto', 'user']
+    list_display = ['especialidade', 'profile']
 
 
 @admin.register(DatasAbertas)
 class DatasAbertasAdmin(admin.ModelAdmin):
-    list_display = ['data', 'user', 'agendado']
+    list_display = ['data', 'profile', 'agendado']

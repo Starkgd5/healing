@@ -39,39 +39,6 @@
                     </div>
                 </div>
                 <br>
-                <div class="row">
-                    <div class="col-md">
-                        <label for="nome">Nome completo:</label>
-                        <input type="text" class="form-control shadow-main-color" name="nome" id="nome" placeholder="Digite seu nome ...">
-                    </div>
-                    <div class="col-md">
-                        <label for="cep">CEP</label>
-                        <input type="text" name="cep" id="cep" class="form-control shadow-main-color" onchange="buscaEndereco(this.value)">
-                        <small id="cepHelpBlock" class="form-text text-muted">Preencha o CEP para buscar o endereço automaticamente.</small>
-                    </div>
-                </div>
-                <br>
-                <label for="rua">Rua</label>
-                <input type="text" name="rua" id="rua" class="form-control shadow-main-color" placeholder="Endereço ..." readonly>
-                <br>
-                <div class="row">
-                    <div class="col-md">
-                        <label for="bairro">Bairro:</label>
-                        <input type="text" class="form-control shadow-main-color" name="bairro" id="bairro" placeholder="Bairro ..." readonly>
-                    </div>
-                    <div class="col-md">
-                        <label for="numero">Número:</label>
-                        <input type="number" name="numero" id="numero" class="form-control shadow-main-color">
-
-                    </div>
-                </div>
-                <br>
-                <label for="rg">RG:</label>
-                <input type="file" name="rg" id="rg" class="form-control shadow-main-color">
-                <br>
-                <label for="foto">Foto de perfil:</label>
-                <input type="file" name="foto" id="foto" class="form-control shadow-main-color">
-                <br>
                 <label for="especialidade">Especialidade médica</label>
                 <select name="especialidade" class="form-select" id="especialidade">
                     {% for especialidade in especialidades %}
@@ -90,31 +57,5 @@
         </div>
         <div class="col-md-4"></div>
     </div>
-
 </div>
-
-<script>
-    function buscaEndereco(cep) {
-        // Limpa os campos de endereço
-        document.getElementById("rua").value = "";
-        document.getElementById("bairro").value = "";
-
-        // Verifica se o CEP possui apenas números
-        if (/^\d+$/.test(cep)) {
-            // Faz a requisição à API ViaCEP
-            fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.erro) {
-                        document.getElementById("rua").value = data.logradouro;
-                        document.getElementById("bairro").value = data.bairro;
-                    }
-                })
-                .catch(error => console.error('Erro ao buscar endereço:', error));
-        } else {
-            alert("O CEP deve conter apenas números.");
-        }
-    }
-</script>
-
 {% endblock 'body' %}

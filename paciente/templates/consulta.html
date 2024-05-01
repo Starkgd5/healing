@@ -41,9 +41,9 @@
                     {% endfor %}
                 {% endif %}
                 <div class="row">
-                    <div class="col-md-3"><img src="{{dado_medico.foto.url}}" class="foto-perfil-card-lg" alt=""></div>
+                    <div class="col-md-3"><img src="{{dado_medico.profile.foto.url}}" class="foto-perfil-card-lg" alt="{{dado_medico.profile.foto.alt}}"></div>
                     <div class="col-md">
-                        <p style="font-size: 20px" class="p-bold">Dr(a). {{dado_medico.nome}} <i class="bi bi-patch-check-fill icon-main"></i></p>
+                        <p style="font-size: 20px" class="p-bold">Dr(a). {{dado_medico.profile.nome}} <i class="bi bi-patch-check-fill icon-main"></i></p>
                         <p>{{dado_medico.descricao}}</p>
                         <p class="p-bold">{{consulta.data_aberta.data}}</p>
                     </div>
