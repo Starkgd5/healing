@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from django.contrib.auth.models import User
 from django.db import models
 
 from usuarios.models import UserProfile
 
 
 def is_medico(profile):
-    return DadosMedico.objects.filter(profile_id=profile.id).exists()
+    return DadosMedico.objects.filter(profile=profile).exists()
 
 
 class Especialidades(models.Model):

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block 'body' %}
+<div class="container">
+    <h1>Excluir Perfil</h1>
+    <p>Você tem certeza que deseja excluir o perfil de {{ profile.nome }}?</p>
+    <form action="{% url 'excluir_perfil' profile.id %}" method="delete">
+        {% csrf_token %}
+        <input type="submit" value="Confirmar Exclusão" class="btn btn-danger">
+    </form>
+</div>
+{% endblock %}

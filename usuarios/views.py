@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.messages import constants
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 
 from medico.models import DadosMedico, is_medico
 from paciente.models import DadosPaciente
@@ -54,7 +54,7 @@ def login_view(request):
         if user:
             login(request, user)
             try:
-                profile = UserProfile.objects.get(user=user)
+                profile = UserProfile.objects.filter(user=user)
             except UserProfile.DoesNotExist:
                 profile = None
 
@@ -106,6 +106,11 @@ def cadastro_profile(request):
         messages.add_message(
             request,
             constants.SUCCESS, 'Cadastro de perfil realizado com sucesso.')
+        profile_id = dados_perfil.id
+        if profile_id:
+            profile = get_object_or_404(UserProfile, id=profile_id)
+            # enviar profile para a sessão do usuario
+            request.session['profile_id'] = profile.id
         return redirect('/usuarios/escolher_tipo')
 
 
@@ -139,3 +144,85 @@ def selecionar_perfil(request):
             if is_medico(profile):
                 return redirect('/medicos/consultas_medico')
             return redirect('/pacientes/home')
+
+
+def perfil_list(request):
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
+    profiles = UserProfile.objects.filter(
+        user=request.user).prefetch_related(
+            'dadosmedico__especialidade').values(
+                'id',
+                'dadosmedico__especialidade__especialidade',
+                'nome', 'rua', 'numero', 'bairro').distinct()
+    context = {
+        'profiles': profiles,
+        'is_medico': is_medico(profile),
+    }
+    return render(request, 'perfil_list.html', context)
+
+
+def editar_perfil(request, profile_id):
+    profile_id_r = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id_r)
+    profile_edit = UserProfile.objects.get(id=profile_id)
+    if request.method == "GET":
+        context = {
+            'profile': profile_edit,
+            'is_medico': is_medico(profile),
+        }
+        return render(request, 'editar_perfil.html', context)
+    elif request.method == "PUT":
+        nome = request.POST.get('nome')
+        cep = request.POST.get('cep')
+        rua = request.POST.get('rua')
+        bairro = request.POST.get('bairro')
+        numero = request.POST.get('numero')
+        rg = request.FILES.get('rg')
+        foto = request.FILES.get('foto')
+
+        if not all([nome, cep, rua, bairro, rg, foto]):
+            messages.add_message(request, constants.WARNING,
+                                 'Preencha todos os campos.')
+
+        dados_perfil = UserProfile(
+            nome=nome,
+            cep=cep,
+            rua=rua,
+            bairro=bairro,
+            numero=numero,
+            rg=rg,
+            foto=foto,
+            user=request.user
+        )
+        dados_perfil.save()
+
+        messages.add_message(
+            request,
+            constants.SUCCESS, 'Edição de perfil realizada com sucesso.')
+        return redirect('/usuarios/perfil_list')
+
+
+def excluir_perfil(request, profile_id):
+    profile_id_r = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id_r)
+    profile_edit = UserProfile.objects.get(id=profile_id)
+    if request.method == "GET":
+        context = {
+            'profile': profile_edit,
+            'is_medico': is_medico(profile),
+        }
+        return render(request, 'excluir_perfil.html', context)
+    elif request.method == "DELETE":
+        # Exclui o perfil do usuário
+        if profile_edit == profile:
+            profile_edit.delete()
+            messages.add_message(
+                request,
+                constants.SUCCESS, 'Perfil deletado com sucesso.')
+            return redirect('/usuarios/login')
+        profile_edit.delete()
+        messages.add_message(
+            request,
+            constants.SUCCESS, 'Perfil deletado com sucesso.')
+        return redirect('/usuarios/perfil_list')

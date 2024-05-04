@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'title' %}Lista de Perfis{% endblock %}
+
+{% block 'head' %}
+<link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+{% endblock %}
+
+{% block 'body' %}
+{% include "partials/navbar.html" %}
+
+<div class="container">
+    <div class="row align-items-center mb-2">
+        <div class="col-md"><h1>Lista de Perfis</h1></div>
+        <div class="col-md"><a href="{% url 'cadastro_profile' %}" class="btn btn-success">Cadastrar</a></div>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Especialização</th>
+                <th>Rua</th>
+                <th>Bairro</th>
+                <th>Número</th>
+                <th>Opções</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile.nome }}</td>
+                <td>{{ profile.dadosmedico__especialidade__especialidade }}</td>
+                <td>{{ profile.rua }}</td>
+                <td>{{ profile.bairro }}</td>
+                <td>{{ profile.numero }}</td>
+                <td>
+                    <a href="{% url 'editar_perfil' profile.id %}" class="btn btn-primary">Editar</a>
+                    <a href="{% url 'excluir_perfil' profile.id %}" class="btn btn-danger">Excluir</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

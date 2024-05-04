@@ -55,10 +55,6 @@ search_doctor("João da Silva")
 def cadastro_medico(request):
     profile_id = request.session.get('profile_id')
     profile = UserProfile.objects.get(id=profile_id)
-    if is_medico(profile):
-        messages.add_message(request, constants.WARNING,
-                             'Você já está cadastrado como médico.')
-        return redirect('/medicos/abrir_horario')
 
     if request.method == "GET":
         especialidades = Especialidades.objects.all()
@@ -94,7 +90,7 @@ def cadastro_medico(request):
             request,
             constants.SUCCESS, 'Cadastro médico realizado com sucesso.')
 
-        return redirect('/medicos/abrir_horario')
+        return redirect('/usuarios/login')
 
 
 @login_required(login_url='/usuarios/login')
@@ -250,7 +246,8 @@ def finalizar_consulta(request, id_consulta):
 
 @login_required(login_url='/usuarios/login')
 def add_documento(request, id_consulta):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
@@ -287,7 +284,8 @@ def add_documento(request, id_consulta):
 
 @login_required(login_url='/usuarios/login')
 def cancelar_consulta(request, id_consulta):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
@@ -305,7 +303,8 @@ def cancelar_consulta(request, id_consulta):
 
 @login_required(login_url='/usuarios/login')
 def dashboard_medico(request):
-    profile = UserProfile.objects.get(user=request.user)
+    profile_id = request.session.get('profile_id')
+    profile = UserProfile.objects.get(id=profile_id)
     if not is_medico(profile):
         messages.add_message(request, constants.WARNING,
                              'Somente médicos podem acessar essa página.')
